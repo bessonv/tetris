@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let points = 0;
 
     let board;
+    let game;
 
     const canvas = document.querySelector('#canvas');
     const ctx = canvas.getContext("2d");
@@ -22,10 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        board = new Board(canvas.height, canvas.width);
-        board.init();
-        board.addShape();
-        board.drawShape();
+        game = new GameLogic(canvas);
+
+
+        // board = new Board(canvas.height, canvas.width);
+        // board.init();
+        // board.addShape();
+        // board.drawShape();
     }
 
     function checkKey(e) {
@@ -44,9 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        board.clearShape();
-        board.moveShape(direction);        
-        board.drawShape();
+        game.input(direction);
+
+        // board.clearShape();
+        // board.moveShape(direction);        
+        // board.drawShape();
     }
 
     class BoardPixel {
@@ -94,8 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
             this.shape = shapes[shapeType];
             this.location = [0, 0]; // horizontal, vertical
             this.newlocation = [0, 0];
-            // this.pixelArray = arr;
             this.color = colors[shapeColor];
+            this.fixed = false;
         }
 
         moveLeft() {
@@ -145,6 +151,50 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    class GameLogic {
+        constructor(canvas) {
+            this.gameStatus;
+            this.board = new Board(canvas.height, canvas.width);
+            this.board.init();
+            this.gameloop;
+
+            this.run();
+        }
+
+        input(direction) {
+            this.board.clearShape();
+            this.board.moveShape(direction);        
+            this.board.drawShape();
+        }
+
+        run() {
+            this.board.addShape();
+            this.board.drawShape();
+            this.gameStatus = 'running';
+            setInterval(() => {
+                if (this.gameStatus == 'running') {
+                    this.input("down");
+                }
+                if (this.board.currentShape.fixed) {
+                    this.board.addShape();
+                    this.board.drawShape();
+                }
+            }, 700);
+        }
+
+        pause() {
+            this.gameStatus = 'paused';
+        }
+
+        resume() {
+            this.gameStatus = 'running';
+        }
+
+        restart() {
+
+        }
+    }
+
     class Board {
         constructor(height, width) {
             this.columnNum = 10;
@@ -180,7 +230,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         drawShape() {
             let locationArray = this.currentShape.getBlockLocation(this.currentShape.location);
-            console.log(this.currentShape, locationArray);
             locationArray.forEach(shapePixel => {
                 let pixel = this.pixels[shapePixel[0]][shapePixel[1]];
                 pixel.type = 1;
@@ -191,19 +240,20 @@ document.addEventListener("DOMContentLoaded", () => {
         addShape() {
             let randomShape = Math.floor(Math.random() * 4);
             let randomColor = Math.floor(Math.random() * 3);
-            // this.currentShape = new Shape(randomShape, randomColor);
             this.currentShape = new Shape(randomShape, randomColor);
         }
 
         moveShape(direction) {
             let location = this.currentShape.getNewLocation(direction);
             let locationArray = this.currentShape.getBlockLocation(location);
-            if (!this.hasCollision(locationArray)) {
+            if (this.hasShapeCollision(locationArray)) {
+                this.currentShape.fixed = true;
+            } else if (!this.hasWallCollision(locationArray)) {
                 this.currentShape.updateLocation();
             }
         }
 
-        hasCollision(location) {
+        hasWallCollision(location) {
             let collision = false;
             location.forEach(shapePixel => {
                 if (shapePixel[1] < 0 || shapePixel[1] > this.columnNum - 1) {
@@ -211,6 +261,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
             return collision;
+        }
+
+        hasShapeCollision(location) {
+            let collision = false;
+            // let currentlocation = this.currentShape.getBlockLocation(this.currentShape.location);
+            // let intersection = location.filter(pixel => currentlocation.every((value, index) => {return value === location[index]}));
+            // console.log(this.intersection(location, currentlocation));
+            location.forEach(shapePixel => {
+                if (shapePixel[0] > this.rowNum - 1) {
+                    collision = true;
+                } else {
+                    let pixel = this.pixels[shapePixel[0]][shapePixel[1]];
+                    if (pixel.type == 1) {
+                        collision = true;
+                    }
+                }
+            });
+            return collision;
+        }
+
+        intersection(location, currentlocation) {
+            let intersection = false;
+            location.forEach(pixel => {
+                currentlocation.forEach(curpixel => {
+                    if ((pixel[0] == curpixel[0]) && (pixel[1] == curpixel[1])) {
+                        intersection = true;
+                    }
+                });
+            });
+            return intersection;
         }
     }
 
