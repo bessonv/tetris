@@ -19,9 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.onkeydown = checkKey;
 
     function init() {
-        // const canvas = document.querySelector('#canvas');
-        // const ctx = canvas.getContext("2d");
-
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -29,13 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
         board.init();
         board.addShape();
         board.drawShape();
-
-        // document.onkeydown = checkKey;
-
-    }
-
-    function moveShape(direction) {
-        console.log(direction);
     }
 
     function checkKey(e) {
@@ -54,12 +44,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // this.currentShape.move(direction);
-        // this.drawShape();
         board.clearShape();
-        board.currentShape.move(direction);
+        board.moveShape(direction);        
         board.drawShape();
-        moveShape(direction);
     }
 
     class BoardPixel {
@@ -106,25 +93,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
             this.shape = shapes[shapeType];
             this.location = [0, 0]; // horizontal, vertical
+            this.newlocation = [0, 0];
             // this.pixelArray = arr;
             this.color = colors[shapeColor];
         }
 
-        move(direction) {
-            if (direction == "down") {
-                this.location[1]++;
-            } else if (direction == "left") {
-                this.location[0]--;
-            } else if (direction == "right") {
-                this.location[0]++;
-            }
+        moveLeft() {
+            this.newlocation[0]--;
         }
 
-        getBlockLocation() {
+        moveRight() {
+            this.newlocation[0]++;
+        }
+
+        moveDown() {
+            this.newlocation[1]++;
+        }
+
+        updateLocation() {
+            this.location = this.newlocation.slice();
+        }
+
+        getNewLocation(direction) {
+            this.newlocation = this.location.slice();
+            if (direction == "down") {
+                this.moveDown();
+            } else if (direction == "left") {
+                this.moveLeft();
+            } else if (direction == "right") {
+                this.moveRight();
+            }
+            return this.newlocation;
+        }
+
+        getBlockLocation(loc) {
             let blockLocation = [];
             for (let i = 0; i < this.shape.length; i++) {
-                let x = this.shape[i][0] + this.location[0];
-                let y = this.shape[i][1] + this.location[1];
+                let x = this.shape[i][0] + loc[0];
+                let y = this.shape[i][1] + loc[1];
                 blockLocation.push([y, x]);
             }
             return blockLocation;
@@ -147,8 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.pWidth = width/this.columnNum;
             this.pSize = (this.pHeight > this.pWidth) ? this.pWidth : this.pHeight;
             this.pixels = new Array();
-
-            this.currentShape = this.addShape();
+            this.currentShape;
         }
 
         init() {
@@ -157,26 +162,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 for (let i = 0; i < this.columnNum; i++) {
                     let newpixel = new BoardPixel(i, j, this.pSize);
                     row.splice(i, 0, newpixel);
-                    // this.pixels[j][i] = newpixel;
                     newpixel.renderPixel();
                 }
                 this.pixels.splice(j, 0, row);
             }
+            this.addShape();
         }
 
         clearShape() {
-            let locationArray = this.currentShape.getBlockLocation();
+            let locationArray = this.currentShape.getBlockLocation(this.currentShape.location);
             locationArray.forEach(shapePixel => {
                 let pixel = this.pixels[shapePixel[0]][shapePixel[1]];
-                pixel.type = 1;
+                pixel.type = 0;
                 pixel.clearPixel();
             });
         }
 
         drawShape() {
-            let locationArray = this.currentShape.getBlockLocation();
+            let locationArray = this.currentShape.getBlockLocation(this.currentShape.location);
+            console.log(this.currentShape, locationArray);
             locationArray.forEach(shapePixel => {
                 let pixel = this.pixels[shapePixel[0]][shapePixel[1]];
+                pixel.type = 1;
                 pixel.fillPixel(this.currentShape.color);
             });
         }
@@ -185,7 +192,25 @@ document.addEventListener("DOMContentLoaded", () => {
             let randomShape = Math.floor(Math.random() * 4);
             let randomColor = Math.floor(Math.random() * 3);
             // this.currentShape = new Shape(randomShape, randomColor);
-            return new Shape(randomShape, randomColor);
+            this.currentShape = new Shape(randomShape, randomColor);
+        }
+
+        moveShape(direction) {
+            let location = this.currentShape.getNewLocation(direction);
+            let locationArray = this.currentShape.getBlockLocation(location);
+            if (!this.hasCollision(locationArray)) {
+                this.currentShape.updateLocation();
+            }
+        }
+
+        hasCollision(location) {
+            let collision = false;
+            location.forEach(shapePixel => {
+                if (shapePixel[1] < 0 || shapePixel[1] > this.columnNum - 1) {
+                    collision = true;
+                }
+            });
+            return collision;
         }
     }
 
