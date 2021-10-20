@@ -42,24 +42,23 @@ document.addEventListener("DOMContentLoaded", () => {
             this.y = yPosition*pSize;
             this.pSize = pSize;
             this.type = 0;
+            this.color = 'black';
         }
 
         clearPixel() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(this.x, this.y, this.pSize, this.pSize);
-
+            this.color = 'black';
             this.renderPixel();
         }
 
         renderPixel() {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.pSize, this.pSize);
             ctx.strokeStyle = 'white';
             ctx.strokeRect(this.x, this.y, this.pSize, this.pSize);
         }
 
         fillPixel(color) {
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.pSize, this.pSize);
-
+            this.color = color;
             this.renderPixel();
         }
     }
@@ -97,6 +96,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         moveDown() {
             this.newlocation[1]++;
+        }
+
+        moveToLocation(row, col) {
+            this.location = [col, row];
         }
 
         updateLocation() {
@@ -184,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     this.input("down");
                 }
                 if (this.board.currentShape.fixed) {
+                    this.board.checkRows();
                     this.board.addShape();
                     this.board.drawShape();
                 }
@@ -249,6 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let randomShape = Math.floor(Math.random() * 5);
             let randomColor = Math.floor(Math.random() * 3);
             this.currentShape = new Shape(randomShape, randomColor);
+            this.currentShape.moveToLocation(0, Math.floor(this.columnNum/2) - 1);
         }
 
         moveShape(direction) {
@@ -256,8 +261,41 @@ document.addEventListener("DOMContentLoaded", () => {
             let locationArray = this.currentShape.getBlockLocation(location);
             if (this.hasShapeCollision(locationArray)) {
                 this.currentShape.fixed = true;
+                // this.checkRows();
             } else if (!this.hasWallCollision(locationArray)) {
                 this.currentShape.updateLocation();
+            }
+        }
+
+        checkRows() {
+            let rowsToClear = [];
+            for (let row = 0; row < this.pixels.length; row++) {
+                let filledLine = true;
+                for (let column = 0; column < this.pixels[row].length; column++) {
+                    if (this.pixels[row][column].type == 0) {
+                        filledLine = false;
+                    }                    
+                }
+                if (filledLine) {
+                    rowsToClear.push(row);
+                }
+            }
+            rowsToClear.forEach(row => {
+                this.redrawPixelArray(row);
+            });
+        }
+
+        redrawPixelArray(borderrow) {
+            for (let row = this.pixels.length; row > 0; row--) {
+                if (row < borderrow) {
+                    for (let col = 0; col < this.pixels[row].length; col++) {
+                        let pixel = this.pixels[row][col];
+                        this.pixels[row+1][col].type = pixel.type;
+                        this.pixels[row+1][col].color = pixel.color;
+                        this.pixels[row+1][col].renderPixel();
+                    }
+                }
+                
             }
         }
 
