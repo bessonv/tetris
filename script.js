@@ -1,17 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log('loaded');
-    let shapes = [];
-    let currentShape;
-    let height = 15;
-    let width = 10;
-    let state = 1;      // 1 running - 0 paused - 2 game over
-    let colors = ['black', 'orange', 'red', 'blue'];
-    let move = 0;
-    let occupiedblocks = [];
     let direction = "";
-    let points = 0;
-
-    let board;
     let game;
 
     const canvas = document.querySelector('#canvas');
@@ -24,12 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         game = new GameLogic(canvas);
-
-
-        // board = new Board(canvas.height, canvas.width);
-        // board.init();
-        // board.addShape();
-        // board.drawShape();
     }
 
     function checkKey(e) {
@@ -44,15 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
             direction="left";
         } else if (e.keyCode == "39") {
             direction="right";
+        } else if (e.keyCode == "38"){
+            direction="up";
         } else {
             return;
         }
 
         game.input(direction);
-
-        // board.clearShape();
-        // board.moveShape(direction);        
-        // board.drawShape();
     }
 
     class BoardPixel {
@@ -86,10 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
     class Shape {
         constructor(shapeType, shapeColor) {
             const shapes = [
-                [[1, 0], [0, 1], [1, 1], [2, 1]], // angle shape
-                [[0, 0], [0, 1], [0, 2], [0, 3]], // line
-                [[0, 0], [0, 1], [1, 0], [1, 1]], // square
-                [[2, 0], [0, 1], [1, 1], [2, 1]] // L shape
+                [[1, 0], [0, 1], [1, 1], [2, 1]], // angle shape 3x3
+                [[1, 0], [1, 1], [1, 2], [1, 3]], // line 4x4
+                [[1, 1], [1, 2], [2, 1], [2, 2]], // square 2x2
+                [[2, 0], [0, 1], [1, 1], [2, 1]], // L shape 3x3
+                [[0, 0], [0, 1], [1, 1], [1, 2]]  // tetris shape 3x3
             ];
             const colors = [
                 'green',
@@ -97,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 'blue'
             ];
 
+            this.shapeType = shapeType;
             this.shape = shapes[shapeType];
             this.location = [0, 0]; // horizontal, vertical
             this.newlocation = [0, 0];
@@ -128,6 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 this.moveLeft();
             } else if (direction == "right") {
                 this.moveRight();
+            } else if (direction == "up") {
+                this.rotate();
             }
             return this.newlocation;
         }
@@ -142,12 +127,35 @@ document.addEventListener("DOMContentLoaded", () => {
             return blockLocation;
         }
 
-        turnRight() {
+        rotate() {
+            let transposed = [];
+            this.shape.forEach(pixel => {
+                transposed.push([pixel[1], pixel[0]]);
+            });
+            let reversed = [];
+            let num = 3;
+            if (this.shapeType == 1 || this.shapeType == 2) {
+                num = 4;
+            }
+            for (let i = 0; i < num; i++) {
+                for (let j = 0; j < num; j++) {
+                    transposed.forEach(pixel => {
+                        if (pixel[0] == i && pixel[1] == j) {
+                            reversed.push([i, num - 1 - j]);
+                        }
+                    });
+                    
+                }
+            }
+            this.shape = reversed.slice();
+        }
 
+        turnRight() {
+            this.rotate();
         }
 
         turnLeft() {
-
+            this.rotate();
         }
     }
 
@@ -163,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         input(direction) {
             this.board.clearShape();
-            this.board.moveShape(direction);        
+            this.board.moveShape(direction);
             this.board.drawShape();
         }
 
@@ -238,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         addShape() {
-            let randomShape = Math.floor(Math.random() * 4);
+            let randomShape = Math.floor(Math.random() * 5);
             let randomColor = Math.floor(Math.random() * 3);
             this.currentShape = new Shape(randomShape, randomColor);
         }
