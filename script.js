@@ -75,7 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const colors = [
                 'green',
                 'red',
-                'blue'
+                'blue',
+                'orange',
+                'purple'
             ];
 
             this.shapeType = shapeType;
@@ -268,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         addShape() {
             let randomShape = Math.floor(Math.random() * 5);
-            let randomColor = Math.floor(Math.random() * 3);
+            let randomColor = Math.floor(Math.random() * 5);
             this.currentShape = new Shape(randomShape, randomColor);
             let offset = -1;
             if (this.currentShape.frameDim() > 3) {
