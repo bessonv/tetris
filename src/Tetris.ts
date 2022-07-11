@@ -1,12 +1,24 @@
 import GameLogic from "./GameLogic";
 
-class MiniGame {
+interface Game {
+    next_round: boolean;
+
+    initDom(): void;
+    again: () => void;
+    cancel: () => void;
+    createCanvas(): HTMLCanvasElement;
+    createButton(element: HTMLInputElement, name: string, event: { (): void; (): void; }): void;
+}
+
+class MiniGame implements Game {
+    next_round: boolean;
+
     constructor() {
         this.next_round = false;
     }
 
     initDom() {
-        let game = document.getElementById("minigame");
+        const game = document.getElementById("minigame");
         if (!game.classList.contains("container_game_start")) {
             game.classList.toggle("container_game_start");
         }
@@ -17,13 +29,13 @@ class MiniGame {
     }
 
     cancel = () => {
-        let container = document.getElementById("minigame");
+        const container = document.getElementById("minigame");
         container.classList.toggle('container_game_start');
         container.innerHTML = "";
     }
 
     createCanvas() {
-        let canvas = document.createElement("canvas");
+        const canvas = document.createElement("canvas");
         canvas.width = 300;
         canvas.height = 450;
         canvas.id = "canvas";
@@ -31,7 +43,7 @@ class MiniGame {
         return canvas;
     }
 
-    createButton(element, name, event) {
+    createButton(element: HTMLInputElement, name: string, event: { (): void; (): void; }) {
         element.type = "button";
         element.value = name;
         element.classList.add("game__again");
@@ -39,7 +51,9 @@ class MiniGame {
     }
 }
 
-class Tetris extends MiniGame{
+class Tetris extends MiniGame implements Game {
+    game: GameLogic;
+
     constructor() {
         super();
         this.initDom();
@@ -48,11 +62,11 @@ class Tetris extends MiniGame{
 
     initDom() {
         super.initDom();
-        let canvas = this.createCanvas();
-        let rules = this.createRules();
-        let container = document.getElementById("minigame");
-        let input_again = document.createElement("input");
-        let input_cancel = document.createElement("input");
+        const canvas = this.createCanvas();
+        const rules = this.createRules();
+        const container = document.getElementById("minigame");
+        const input_again = document.createElement("input");
+        const input_cancel = document.createElement("input");
 
         this.createButton(input_again, "Again", this.again);
         this.createButton(input_cancel, "Cancel", this.cancel);
@@ -74,26 +88,26 @@ class Tetris extends MiniGame{
     }
 
     createRules() {
-        let rules = document.createElement('div');
+        const rules = document.createElement('div');
         rules.innerHTML = 
             "<div>Controls</div><div>&#8594; right, &#8592; left, &#8593; rotate</div>";
         rules.classList.add('container_game_rules');
         return rules;
     }
 
-    checkKey = e => {
+    checkKey = (e: KeyboardEvent) => {
         e.preventDefault();
 
-        e = e || window.event;
+        // e = e || window.event;
         let direction = '';
 
-        if (e.keyCode == '40') {
+        if (e.code == 'ArrowDown') {
             direction="down";
-        } else if (e.keyCode == "37") {
+        } else if (e.code == "ArrowLeft") {
             direction="left";
-        } else if (e.keyCode == "39") {
+        } else if (e.code == "ArrowRight") {
             direction="right";
-        } else if (e.keyCode == "38") {
+        } else if (e.code == "ArrowUp") {
             direction="up";
         } else {
             return;

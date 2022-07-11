@@ -1,6 +1,27 @@
 
-class Shape {
-    constructor(shapeType, shapeColor) {
+interface Shape {
+    shapeType: number;
+    shape: number[][];
+    location: number[];
+    newlocation: number[];
+    color: string;
+    fixed: boolean;
+
+    moveLeft(): void;
+    moveRight(): void;
+    moveDown(): void;
+    moveToLocation(row: number, col: number): void;
+    updateLocation(): void;
+    frameDim(): number;
+    getNewLocation(direction: string): void;
+    rotate(): void;
+    turnRight(): void;
+    turnLeft(): void;
+
+}
+
+class Shape implements Shape {
+    constructor(shapeType: number, shapeColor: number) {
         const shapes = [
             [[1, 0], [0, 1], [1, 1], [2, 1]], // angle shape 3x3
             [[1, 0], [1, 1], [1, 2], [1, 3]], // line 4x4
@@ -36,7 +57,7 @@ class Shape {
         this.newlocation[1]++;
     }
 
-    moveToLocation(row, col) {
+    moveToLocation(row: number, col: number) {
         this.location = [col, row];
     }
 
@@ -52,7 +73,7 @@ class Shape {
         return num;
     }
 
-    getNewLocation(direction) {
+    getNewLocation(direction: string) {
         this.newlocation = this.location.slice();
         if (direction == "down") {
             this.moveDown();
@@ -66,23 +87,23 @@ class Shape {
         return this.newlocation;
     }
 
-    getBlockLocation(loc) {
-        let blockLocation = [];
+    getBlockLocation(loc: number[]) {
+        const blockLocation = [];
         for (let i = 0; i < this.shape.length; i++) {
-            let x = this.shape[i][0] + loc[0];
-            let y = this.shape[i][1] + loc[1];
+            const x = this.shape[i][0] + loc[0];
+            const y = this.shape[i][1] + loc[1];
             blockLocation.push([y, x]);
         }
         return blockLocation;
     }
 
     rotate() {
-        let transposed = [];
+        const transposed: number[][] = [];
         this.shape.forEach(pixel => {
             transposed.push([pixel[1], pixel[0]]);
         });
-        let reversed = [];
-        let num = this.frameDim();
+        const reversed: number[][] = [];
+        const num = this.frameDim();
         for (let i = 0; i < num; i++) {
             for (let j = 0; j < num; j++) {
                 transposed.forEach(pixel => {

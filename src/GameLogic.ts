@@ -1,7 +1,20 @@
 import Board from "./Board";
 
-class GameLogic {
-    constructor(ctx, canvas) {
+interface GameLogic {
+    gameStatus: 'running' | 'pause' | 'stop';
+    board: Board;
+    gameloop: number;
+    ctx: CanvasRenderingContext2D;
+
+    input(direction: string): void;
+    run(): void;
+    stop(): void;
+    pause(): void;
+    resume(): void;
+}
+
+class GameLogic implements GameLogic{
+    constructor(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
         this.gameStatus;
         this.board = new Board(ctx, canvas.height, canvas.width);
         this.board.init();
@@ -11,7 +24,7 @@ class GameLogic {
         this.run();
     }
 
-    input(direction) {
+    input(direction: string) {
         this.board.clearShape();
         this.board.moveShape(direction);
         this.board.drawShape();
@@ -43,16 +56,16 @@ class GameLogic {
     }
 
     pause() {
-        this.gameStatus = 'paused';
+        this.gameStatus = 'pause';
     }
 
     resume() {
         this.gameStatus = 'running';
     }
 
-    restart() {
+    // restart() {
 
-    }
+    // }
 }
 
 export default GameLogic;
