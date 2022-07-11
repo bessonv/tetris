@@ -1,39 +1,166 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log('loaded');
-    let direction = "";
-    let game;
-
-    const canvas = document.querySelector('#canvas');
-    const ctx = canvas.getContext("2d");
-
-    document.onkeydown = checkKey;
 
     function init() {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        game = new GameLogic(canvas);
+        const theGame = new Tetris();
     }
 
-    function checkKey(e) {
-        e.preventDefault();
-
-        e = e || window.event;
-        direction = '';
-
-        if (e.keyCode == '40') {
-            direction="down";
-        } else if (e.keyCode == "37") {
-            direction="left";
-        } else if (e.keyCode == "39") {
-            direction="right";
-        } else if (e.keyCode == "38"){
-            direction="up";
-        } else {
-            return;
+    class MiniGame {
+        constructor() {
+            this.next_round = false;
         }
 
-        game.input(direction);
+        initDom() {
+            let game = document.getElementById("minigame");
+            if (!game.classList.contains("container_game_start")) {
+                game.classList.toggle("container_game_start");
+            }
+        }
+
+        again = () => {
+            this.initDom();
+        }
+
+        cancel = () => {
+            let container = document.getElementById("minigame");
+            container.classList.toggle('container_game_start');
+            container.innerHTML = "";
+        }
+
+        createCanvas() {
+            let canvas = document.createElement("canvas");
+            canvas.width = 300;
+            canvas.height = 450;
+            canvas.id = "canvas";
+            canvas.style.cssText = "width: 300px; height: 450px;";
+            return canvas;
+        }
+
+        createButton(element, name, event) {
+            element.type = "button";
+            element.value = name;
+            element.classList.add("game__again");
+            element.addEventListener("click", event);
+        }
+    }
+
+    class Tetris extends MiniGame{
+        constructor() {
+            super();
+            this.initDom();
+            this.next_round = false;
+        }
+
+        initDom() {
+            super.initDom();
+            let canvas = this.createCanvas();
+            let rules = this.createRules();
+            let container = document.getElementById("minigame");
+            let input_again = document.createElement("input");
+            let input_cancel = document.createElement("input");
+
+            this.createButton(input_again, "Again", this.again);
+            this.createButton(input_cancel, "Cancel", this.cancel);
+
+            if (container) {
+                container.innerHTML = "";
+                const ctx = canvas.getContext("2d");
+                ctx?.fillRect(0, 0, canvas.width, canvas.height);
+
+                container.appendChild(canvas);
+                container.appendChild(rules);
+                container.appendChild(input_again);
+                container.appendChild(input_cancel);
+
+                canvas.focus();
+                this.game = new GameLogic(ctx, canvas);
+                document.onkeydown = this.checkKey;
+            }
+        }
+
+        createRules() {
+            let rules = document.createElement('div');
+            rules.innerHTML = 
+                "<div>Controls</div><div>&#8594; right, &#8592; left, &#8593; rotate</div>";
+            rules.classList.add('container_game_rules');
+            return rules;
+        }
+
+        checkKey = e => {
+            e.preventDefault();
+    
+            e = e || window.event;
+            let direction = '';
+    
+            if (e.keyCode == '40') {
+                direction="down";
+            } else if (e.keyCode == "37") {
+                direction="left";
+            } else if (e.keyCode == "39") {
+                direction="right";
+            } else if (e.keyCode == "38") {
+                direction="up";
+            } else {
+                return;
+            }
+    
+            this.game.input(direction);
+        }
+    }
+
+    class GameLogic {
+        constructor(ctx, canvas) {
+            this.gameStatus;
+            this.board = new Board(ctx, canvas.height, canvas.width);
+            this.board.init();
+            this.gameloop;
+            this.ctx = ctx;
+
+            this.run();
+        }
+
+        input(direction) {
+            this.board.clearShape();
+            this.board.moveShape(direction);
+            this.board.drawShape();
+        }
+
+        run() {
+            this.board.addShape();
+            this.board.drawShape();
+            this.gameStatus = 'running';
+            setInterval(() => {
+                if (this.gameStatus == 'running') {
+                    this.input("down");
+                    if (this.board.currentShape.fixed) {
+                        this.board.checkRows();
+                        this.board.addShape();
+                        if (this.board.loseState) {
+                            this.stop();
+                            
+                        }
+                        this.board.drawShape();
+                    }
+                    console.log(this.board);
+                }
+            }, 700);
+        }
+
+        stop() {
+            this.gameStatus = 'stop';
+        }
+
+        pause() {
+            this.gameStatus = 'paused';
+        }
+
+        resume() {
+            this.gameStatus = 'running';
+        }
+
+        restart() {
+
+        }
     }
 
     class BoardPixel {
@@ -45,21 +172,21 @@ document.addEventListener("DOMContentLoaded", () => {
             this.color = 'black';
         }
 
-        clearPixel() {
+        clearPixel(ctx) {
             this.color = 'black';
-            this.renderPixel();
+            this.renderPixel(ctx);
         }
 
-        renderPixel() {
+        renderPixel(ctx) {
             ctx.fillStyle = this.color;
             ctx.fillRect(this.x, this.y, this.pSize, this.pSize);
             ctx.strokeStyle = 'white';
             ctx.strokeRect(this.x, this.y, this.pSize, this.pSize);
         }
 
-        fillPixel(color) {
+        fillPixel(ctx, color) {
             this.color = color;
-            this.renderPixel();
+            this.renderPixel(ctx);
         }
     }
 
@@ -169,62 +296,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    class GameLogic {
-        constructor(canvas) {
-            this.gameStatus;
-            this.board = new Board(canvas.height, canvas.width);
-            this.board.init();
-            this.gameloop;
-
-            this.run();
-        }
-
-        input(direction) {
-            this.board.clearShape();
-            this.board.moveShape(direction);
-            this.board.drawShape();
-        }
-
-        run() {
-            this.board.addShape();
-            this.board.drawShape();
-            this.gameStatus = 'running';
-            setInterval(() => {
-                if (this.gameStatus == 'running') {
-                    this.input("down");
-                    if (this.board.currentShape.fixed) {
-                        this.board.checkRows();
-                        this.board.addShape();
-                        if (this.board.loseState) {
-                            this.stop();
-                            
-                        }
-                        this.board.drawShape();
-                    }
-                    console.log(this.board);
-                }
-            }, 700);
-        }
-
-        stop() {
-            this.gameStatus = 'stop';
-        }
-
-        pause() {
-            this.gameStatus = 'paused';
-        }
-
-        resume() {
-            this.gameStatus = 'running';
-        }
-
-        restart() {
-
-        }
-    }
-
     class Board {
-        constructor(height, width) {
+        constructor(ctx, height, width) {
             this.columnNum = 10;
             this.rowNum = 15;
             this.pHeight = height/this.rowNum;
@@ -233,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.pixels = new Array();
             this.loseState = false;
             this.currentShape;
+            this.ctx = ctx;
         }
 
         init() {
@@ -241,7 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 for (let i = 0; i < this.columnNum; i++) {
                     let newpixel = new BoardPixel(i, j, this.pSize);
                     row.splice(i, 0, newpixel);
-                    newpixel.renderPixel();
+                    newpixel.renderPixel(this.ctx);
                 }
                 this.pixels.splice(j, 0, row);
             }
@@ -253,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
             locationArray.forEach(shapePixel => {
                 let pixel = this.setPixelType(shapePixel, 0);
                 if (pixel) {
-                    pixel.clearPixel();
+                    pixel.clearPixel(this.ctx);
                 }
             });
         }
@@ -263,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
             locationArray.forEach(shapePixel => {
                 let pixel = this.setPixelType(shapePixel, 1);
                 if (pixel) {
-                    pixel.fillPixel(this.currentShape.color);
+                    pixel.fillPixel(this.ctx, this.currentShape.color);
                 }
             });
         }
@@ -318,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         let pixel = this.pixels[row][col];
                         this.pixels[row+1][col].type = pixel.type;
                         this.pixels[row+1][col].color = pixel.color;
-                        this.pixels[row+1][col].renderPixel();
+                        this.pixels[row+1][col].renderPixel(this.ctx);
                     }
                 }
 
