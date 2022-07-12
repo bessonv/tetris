@@ -7,7 +7,7 @@ interface Game {
     again: () => void;
     cancel: () => void;
     createCanvas(): HTMLCanvasElement;
-    createButton(element: HTMLInputElement, name: string, event: { (): void; (): void; }): void;
+    createButton(name: string, event: (e: { target: unknown }) => void): HTMLElement;
 }
 
 class MiniGame implements Game {
@@ -43,21 +43,51 @@ class MiniGame implements Game {
         return canvas;
     }
 
-    createButton(element: HTMLInputElement, name: string, event: { (): void; (): void; }) {
-        element.type = "button";
-        element.value = name;
-        element.classList.add("game__again");
-        element.addEventListener("click", event);
+    createButton(name: string, event: (e: { target: unknown }) => void ) {
+        const button = document.createElement("input");
+        button.type = "button";
+        button.value = name;
+        button.classList.add("game_button");
+        button.addEventListener("click", event);
+        return button;
     }
 }
 
 class Tetris extends MiniGame implements Game {
     game: GameLogic;
+    isPaused: boolean;
 
     constructor() {
         super();
         this.initDom();
         this.next_round = false;
+        this.isPaused = false;
+    }
+
+    pause = (e: { target: HTMLInputElement }) => {
+        const button = e.target;
+        if (this.isPaused) {
+            this.game.resume();
+            this.isPaused = false;
+            button.value = "Pause";
+        } else {
+            this.game.pause();
+            this.isPaused = true;
+            button.value = "Resume";
+        }
+    }
+
+    start = () => {
+        this.game.run();
+    }
+
+    stop = () => {
+        this.game.stop();
+    }
+
+    restart = () => {
+        this.again;
+        this.game.run();
     }
 
     initDom() {
@@ -65,11 +95,7 @@ class Tetris extends MiniGame implements Game {
         const canvas = this.createCanvas();
         const rules = this.createRules();
         const container = document.getElementById("minigame");
-        const input_again = document.createElement("input");
-        const input_cancel = document.createElement("input");
-
-        this.createButton(input_again, "Again", this.again);
-        this.createButton(input_cancel, "Cancel", this.cancel);
+        const buttons = this.createButtons();
 
         if (container) {
             container.innerHTML = "";
@@ -78,8 +104,7 @@ class Tetris extends MiniGame implements Game {
 
             container.appendChild(canvas);
             container.appendChild(rules);
-            container.appendChild(input_again);
-            container.appendChild(input_cancel);
+            container.appendChild(buttons);
 
             canvas.focus();
             this.game = new GameLogic(ctx, canvas);
@@ -90,9 +115,20 @@ class Tetris extends MiniGame implements Game {
     createRules() {
         const rules = document.createElement('div');
         rules.innerHTML = 
-            "<div>Controls</div><div>&#8594; right, &#8592; left, &#8593; rotate</div>";
+            "<div>Controls:  &#8594; right,  &#8592; left,  &#8593; rotate</div>";
         rules.classList.add('container_game_rules');
         return rules;
+    }
+
+    createButtons() {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.classList.add('container_game_controls');
+        buttonContainer.appendChild(this.createButton("Start", this.start));
+        buttonContainer.appendChild(this.createButton("Pause", this.pause));        
+        buttonContainer.appendChild(this.createButton("Stop", this.stop));
+        buttonContainer.appendChild(this.createButton("Restart", this.again));
+
+        return buttonContainer;
     }
 
     checkKey = (e: KeyboardEvent) => {

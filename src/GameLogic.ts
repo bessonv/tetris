@@ -20,8 +20,6 @@ class GameLogic implements GameLogic{
         this.board.init();
         this.gameloop;
         this.ctx = ctx;
-
-        this.run();
     }
 
     input(direction: string) {
@@ -34,7 +32,7 @@ class GameLogic implements GameLogic{
         this.board.addShape();
         this.board.drawShape();
         this.gameStatus = 'running';
-        setInterval(() => {
+        const mainLoop: ReturnType<typeof setInterval> = setInterval(() => {
             if (this.gameStatus == 'running') {
                 this.input("down");
                 if (this.board.currentShape.fixed) {
@@ -47,6 +45,14 @@ class GameLogic implements GameLogic{
                     this.board.drawShape();
                 }
                 console.log(this.board);
+            }
+            if (this.gameStatus == 'stop') {
+                this.board.clearShape();
+                this.board.init();
+                return clearInterval(mainLoop);
+            }
+            if (this.gameStatus == 'pause') {
+                console.log(this.board, this.gameStatus);
             }
         }, 700);
     }
