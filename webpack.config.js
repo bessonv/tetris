@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ESLintPlugin = require("eslint-webpack-plugin");
 
 module.exports = {
     mode: 'development',
@@ -20,19 +21,6 @@ module.exports = {
                 exclude: /node_modules/,
             },
             {
-                test: /\.tsx?$/,
-                enforce: 'pre',
-                use: [
-                    {
-                        options: {
-                            eslintPath: require.resolve('eslint'),
-                        },
-                        loader: require.resolve('eslint-loader'),
-                    },
-                ],
-                exclude: /node_modules/,
-            },
-            {
                 test: /\.css$/,
                 use: ["style-loader", "css-loader"],
             }
@@ -42,6 +30,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: path.join(__dirname, "./public/index.html"),
         }),
+        new ESLintPlugin(),
     ],
     devServer: {
         port: 3000,
