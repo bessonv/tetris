@@ -19,7 +19,7 @@ interface Board {
     moveShape(direction: string): void;
     checkRows(): void;
     redrawPixelArray(borderrow: number): void;
-    getPixelTyoe(coords: number[]): void;
+    getPixelType(coords: number[]): void;
     setPixelType(coords: number[], type: number): void;
     hasWallCollision(location: number[][]): boolean;
     hasShapeCollision(location: number[][]): boolean;
@@ -125,12 +125,15 @@ class Board implements Board{
                     this.pixels[row+1][col].renderPixel(this.ctx);
                 }
             }
-
         }
     }
 
-    getPixelTyoe(coords: number[]) {
-        if (coords[0] >= 0 && coords[1] >= 0) {
+    getPixelType(coords: number[]) {
+        if (
+            (coords[0] >= 0 && coords[1] >= 0) && 
+            coords[0] in this.pixels && 
+            coords[1] in this.pixels[coords[0]]
+        ) {
             const pixel = this.pixels[coords[0]][coords[1]];
             return pixel.type;
         }
@@ -159,14 +162,11 @@ class Board implements Board{
 
     hasShapeCollision(location: number[][]) {
         let collision = false;
-        // let currentlocation = this.currentShape.getBlockLocation(this.currentShape.location);
-        // let intersection = location.filter(pixel => currentlocation.every((value, index) => {return value === location[index]}));
-        // console.log(this.intersection(location, currentlocation));
         location.forEach(shapePixel => {
             if (shapePixel[0] > this.rowNum - 1) {
                 collision = true;
             } else {
-                if (this.getPixelTyoe(shapePixel) == 1) {
+                if (this.getPixelType(shapePixel) == 1) {
                     collision = true;
                 }
             }
