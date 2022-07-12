@@ -1,8 +1,29 @@
 body {
     color: white;
     background-color: black;
+    text-transform: uppercase;
 }
 
-#minigame, h2 {
+#minigame, .container_game_controls, .container_game_rules, h2 {
     text-align: center;
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.container_game_controls {
+    display: inline-block;
+}
+
+.container_game_controls .game_button {
+    margin: 0 10px;
+    text-transform: uppercase;
+    padding: 5px 15px;
+    color: white;
+    background-color: black;
+    border: solid 1px white;
+}
+
+.container_game_controls .game_button:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
 }
