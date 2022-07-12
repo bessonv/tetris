@@ -1,13 +1,13 @@
 ## Tetris game
 
-# Installation
+### Installation
 
 ```bash
 npm install
 npm run build
 ```
 
-# Dev
+### Dev
 
 ```bash
 npm install
